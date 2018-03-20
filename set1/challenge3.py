@@ -15,7 +15,7 @@ def brute_force_byte_key(message):
     # Byte key size range is 256 possible keys
     for key in range(256):
         candidate = bytes([i ^ key for i in message])
-        results.append((score_english(candidate), candidate))
+        results.append((score_english(candidate), candidate, key))
     return results
 
 
@@ -24,4 +24,6 @@ if __name__ == '__main__':
     hex_value = codecs.decode(input_string, 'hex')
     decrypted_candidates = brute_force_byte_key(hex_value)
 
-    print(str(max(decrypted_candidates)[1], 'utf8'))
+    _, decrypted_message, key = max(decrypted_candidates)
+    print(str(decrypted_message, 'utf8'))
+    print('Key is {}.'.format(key))

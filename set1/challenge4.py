@@ -334,12 +334,16 @@ e03555453d1e31775f37331823164c341c09e310463438481019fb0b12fa
 32042f46431d2c44607934ed180c1028136a5f2b26092e3b2c4e2930585a'''.split('\n')
 
 
-results = []
-for i in inputs:
-    hex_value = codecs.decode(i, 'hex')
-    candidates = brute_force_byte_key(hex_value)
-    score, best_candidate = max(candidates)
-    results.append((score, best_candidate, i))
+def main():
+    results = []
+    for i in inputs:
+        hex_value = codecs.decode(i, 'hex')
+        score, message, key = max(brute_force_byte_key(hex_value))
+        results.append((score, message, i))
 
-solution = max(results)
-print(str(solution[1], 'utf8'), solution[0], solution[2])
+    solution = max(results)
+    print(str(solution[1], 'utf8'), solution[0], solution[2])
+
+
+if __name__ == '__main__':
+    main()
