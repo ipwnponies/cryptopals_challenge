@@ -14,7 +14,7 @@ def chunk(message, chunk_size):
     return result
 
 
-def bin(message, bin_size):
+def bucket(message, bin_size):
     result = []
     for i in range(bin_size):
         result.append([value for index, value in enumerate(message) if index % bin_size == i])
@@ -45,7 +45,7 @@ def calculate_hamming_distance(message1, message2):
 
 def guess_keysizes(message):
     '''Return top 5 keysize candidates.'''
-    Result = namedtuple('Result', ['distance', 'keysize'])
+    Result = namedtuple('Result', ['distance', 'keysize'])  # pylint: disable=invalid-name
     max_keysize = 40
     result = []
     for keysize in range(1, max_keysize + 1):
@@ -62,7 +62,7 @@ def guess_keysizes(message):
 
 
 def solve_for_key(key_size, message):
-    bins = bin(message, key_size)
+    bins = bucket(message, key_size)
 
     key = []
     for i in bins:
@@ -72,11 +72,9 @@ def solve_for_key(key_size, message):
     return bytes(key)
 
 
-
-
 def main():
-    with open(os.path.join(os.path.dirname(__file__), 'challenge6_data')) as f:
-        input_text = ''.join(f.read().split())
+    with open(os.path.join(os.path.dirname(__file__), 'challenge6_data')) as data_set:
+        input_text = ''.join(data_set.read().split())
     binary = codecs.decode(input_text.encode('utf8'), 'base64')
 
     keysize = guess_keysizes(binary)[0]

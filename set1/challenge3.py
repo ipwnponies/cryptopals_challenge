@@ -19,7 +19,7 @@ def brute_force_byte_key(message):
     return results
 
 
-if __name__ == '__main__':
+def main():
     input_string = '1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736'
     hex_value = codecs.decode(input_string, 'hex')
     decrypted_candidates = brute_force_byte_key(hex_value)
@@ -27,3 +27,7 @@ if __name__ == '__main__':
     _, decrypted_message, key = max(decrypted_candidates)
     print(decrypted_message.decode('utf8'))
     print('Key is {}.'.format(key))
+
+
+if __name__ == '__main__':
+    main()

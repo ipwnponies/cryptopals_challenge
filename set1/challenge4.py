@@ -2,7 +2,6 @@
 # find the key, which has been XOR to every byte
 # Also, what is the message
 import codecs
-from set1.challenge3 import score_english
 from set1.challenge3 import brute_force_byte_key
 
 inputs = '''0e3647e8592d35514a081243582536ed3de6734059001e3f535ce6271032
@@ -338,7 +337,7 @@ def main():
     results = []
     for i in inputs:
         hex_value = codecs.decode(i, 'hex')
-        score, message, key = max(brute_force_byte_key(hex_value))
+        score, message, _ = max(brute_force_byte_key(hex_value))
         results.append((score, message, i))
 
     solution = max(results)
