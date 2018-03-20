@@ -3,8 +3,8 @@ import os.path
 import operator
 from collections import namedtuple
 
-from challenge3 import brute_force_byte_key
-from challenge5 import xor
+from set1.challenge3 import brute_force_byte_key
+from set1.challenge5 import xor
 
 
 def chunk(message, chunk_size):
