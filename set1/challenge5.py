@@ -17,7 +17,7 @@ def xor(key, index, char):
 def main():
     encrypted_bytes = bytes(xor(KEY.encode(), index, byte) for index, byte in enumerate(input_text.encode()))
     # Use codecs.decode to convert a hex string into plain hex bytes
-    assert str(codecs.encode(encrypted_bytes, 'hex'), 'utf8') == expected_output
+    assert codecs.encode(encrypted_bytes, 'hex').decode('utf8') == expected_output
 
 
 if __name__ == '__main__':

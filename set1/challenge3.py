@@ -25,5 +25,5 @@ if __name__ == '__main__':
     decrypted_candidates = brute_force_byte_key(hex_value)
 
     _, decrypted_message, key = max(decrypted_candidates)
-    print(str(decrypted_message, 'utf8'))
+    print(decrypted_message.decode('utf8'))
     print('Key is {}.'.format(key))

@@ -83,8 +83,8 @@ def main():
     key = solve_for_key(keysize, binary)
 
     decrypted = bytes(xor(key, index, byte) for index, byte in enumerate(binary))
-    print(str(decrypted, 'utf8'))
-    print('The key is {}.'.format(str(key, 'utf8')))
+    print(decrypted.decode('utf8'))
+    print('The key is {}.'.format(key.decode('utf8')))
 
 
 if __name__ == '__main__':

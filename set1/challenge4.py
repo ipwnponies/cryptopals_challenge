@@ -342,7 +342,7 @@ def main():
         results.append((score, message, i))
 
     solution = max(results)
-    print(str(solution[1], 'utf8'), solution[0], solution[2])
+    print(solution[1].decode('utf8'), solution[0], solution[2])
 
 
 if __name__ == '__main__':

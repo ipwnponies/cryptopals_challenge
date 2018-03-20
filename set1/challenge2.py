@@ -8,4 +8,4 @@ value2 = codecs.decode(xor_string, 'hex')
 result = bytes(a ^ b for a, b in zip(value1, value2))
 hex_result = codecs.encode(result, 'hex')
 
-assert str(hex_result, 'utf-8') == '746865206b696420646f6e277420706c6179'
+assert hex_result.decode('utf-8') == '746865206b696420646f6e277420706c6179'
