@@ -2,7 +2,8 @@
 # find the key, which has been XOR to every byte
 # Also, what is the message
 import codecs
-from set1.challenge3 import brute_force_byte_key
+
+from util import brute_force_byte_key
 
 inputs = '''0e3647e8592d35514a081243582536ed3de6734059001e3f535ce6271032
 334b041de124f73c18011a50e608097ac308ecee501337ec3e100854201d

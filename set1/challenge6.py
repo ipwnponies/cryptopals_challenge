@@ -3,8 +3,8 @@ import os.path
 import operator
 from collections import namedtuple
 
-from set1.challenge3 import brute_force_byte_key
-from set1.challenge5 import xor
+from util import brute_force_byte_key
+from util import decrypt_rotating_bytekey
 
 
 def chunk(message, chunk_size):
@@ -80,7 +80,7 @@ def main():
     keysize = guess_keysizes(binary)[0]
     key = solve_for_key(keysize, binary)
 
-    decrypted = bytes(xor(key, index, byte) for index, byte in enumerate(binary))
+    decrypted = decrypt_rotating_bytekey(binary, key)
     print(decrypted.decode('utf8'))
     print('The key is {}.'.format(key.decode('utf8')))
 

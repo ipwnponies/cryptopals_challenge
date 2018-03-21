@@ -3,20 +3,7 @@
 # Also, what is the message
 import codecs
 
-
-def score_english(message):
-    common_letters = 'ETAOIN SHRDLU'
-    score = sum(1 for i in message if chr(i).upper() in common_letters)
-    return score
-
-
-def brute_force_byte_key(message):
-    results = []
-    # Byte key size range is 256 possible keys
-    for key in range(256):
-        candidate = bytes([i ^ key for i in message])
-        results.append((score_english(candidate), candidate, key))
-    return results
+from util import brute_force_byte_key
 
 
 def main():
