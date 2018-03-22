@@ -81,8 +81,8 @@ def main():
     key = solve_for_key(keysize, binary)
 
     decrypted = decrypt_rotating_bytekey(binary, key)
-    print(decrypted.decode('utf8'))
-    print('The key is {}.'.format(key.decode('utf8')))
+    assert key.decode() == 'Terminator X: Bring the noise'
+    assert decrypted.decode().startswith("I'm back and I'm ringin' the bell")
 
 
 if __name__ == '__main__':

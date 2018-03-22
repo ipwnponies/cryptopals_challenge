@@ -12,8 +12,8 @@ def main():
     decrypted_candidates = brute_force_byte_key(hex_value)
 
     _, decrypted_message, key = max(decrypted_candidates)
-    print(decrypted_message.decode('utf8'))
-    print('Key is {}.'.format(key))
+    assert decrypted_message.decode() == "Cooking MC's like a pound of bacon"
+    assert key == 88
 
 
 if __name__ == '__main__':

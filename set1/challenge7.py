@@ -15,7 +15,7 @@ def main():
     cipher = AES.new(KEY, AES.MODE_ECB)
     decrypted = cipher.decrypt(message)
 
-    assert decrypted.startswith("I'm back and I'm ringin' the bell")
+    assert decrypted.decode().startswith("I'm back and I'm ringin' the bell")
 
 
 if __name__ == '__main__':

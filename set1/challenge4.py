@@ -341,8 +341,9 @@ def main():
         score, message, _ = max(brute_force_byte_key(hex_value))
         results.append((score, message, i))
 
-    solution = max(results)
-    print(solution[1].decode('utf8'), solution[0], solution[2])
+    _, message, key = max(results)
+    assert message.decode() == 'Now that the party is jumping\n'
+    assert key == '7b5a4215415d544115415d5015455447414c155c46155f4058455c5b523f'
 
 
 if __name__ == '__main__':
