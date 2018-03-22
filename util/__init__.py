@@ -8,10 +8,8 @@ def brute_force_byte_key(message):
 
 
 def decrypt_rotating_bytekey(message, key):
-    binary_key = key.encode('utf8')
-
     # Use modulo to circularly get applicable byte from key
-    return bytes(char ^ binary_key[index % len(binary_key)] for index, char in enumerate(message.encode()))
+    return bytes(char ^ key[index % len(key)] for index, char in enumerate(message))
 
 
 def _score_english(message):
