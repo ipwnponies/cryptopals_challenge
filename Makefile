@@ -1,4 +1,4 @@
-challenges:= 1 2 3 4 5 6 7
+challenges:= 1 2 3 4 5 6 7 8
 .DEFAULT_GOAL:= test
 
 .PHONY: venv
