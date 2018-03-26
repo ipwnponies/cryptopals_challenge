@@ -2,11 +2,7 @@ import codecs
 import os
 
 
-def chunk(message, chunk_size):
-    result = []
-    for index in range(0, len(message), chunk_size):
-        result.append(message[index:index + chunk_size])
-    return result
+from util import chunk
 
 
 def main():

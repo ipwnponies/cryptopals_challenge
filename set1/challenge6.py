@@ -5,13 +5,7 @@ from collections import namedtuple
 
 from util import brute_force_byte_key
 from util import decrypt_rotating_bytekey
-
-
-def chunk(message, chunk_size):
-    result = []
-    for index in range(0, len(message), chunk_size):
-        result.append(message[index:index + chunk_size])
-    return result
+from util import chunk
 
 
 def bucket(message, bin_size):
