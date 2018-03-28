@@ -1,3 +1,6 @@
+from Crypto.Cipher import AES
+
+
 def brute_force_byte_key(message):
     results = []
     # Byte key size range is 256 possible keys
@@ -17,6 +20,16 @@ def chunk(message, chunk_size):
     for index in range(0, len(message), chunk_size):
         result.append(message[index:index + chunk_size])
     return result
+
+
+def decrypt_ecb(message, key):
+    cipher = AES.new(key, AES.MODE_ECB)
+    return cipher.decrypt(message)
+
+
+def xor(value1, value2):
+    assert len(value1) == len(value2)
+    return bytes(a ^ b for a, b in zip(value1, value2))
 
 
 def _score_english(message):
