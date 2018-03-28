@@ -2,7 +2,7 @@
 
 sets:= set1 set2
 challenges_set1:= $(patsubst %, set1-%, 1 2 3 4 5 6 7 8)
-challenges_set2:= $(patsubst %, set2-%, 1)
+challenges_set2:= $(patsubst %, set2-%, 1 2)
 
 .PHONY: help
 help:  # Print help
@@ -13,7 +13,8 @@ venv:  # Create venv
 	./bin/venv_update.py venv= -ppython3 venv install= -r requirements-dev.txt -r requirements.txt --quiet
 
 .PHONY: test
-test: test-$(sets);  # Run all tests
+all_sets :=$(foreach i, $(sets), test-$(i))
+test: $(all_sets)  # Run all tests
 
 .PHONY: test-set1
 test-set1: $(challenges_set1);  # Run tests for set 1
