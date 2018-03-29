@@ -8,8 +8,8 @@ from util import decrypt_ecb
 from util import xor
 
 
-def decrypt_cbc(message, iv, key):
-    chain = [iv] + chunk(message, 16)
+def decrypt_cbc(message, iv_value, key):
+    chain = [iv_value] + chunk(message, 16)
     result = []
     for index, block in enumerate(chain):
         if index == 0:
@@ -19,20 +19,20 @@ def decrypt_cbc(message, iv, key):
     return b''.join(result)
 
 
-def _decrypt_cbc_without_reinventing_the_wheel(message, iv, key):
-    cipher = AES.new(key, AES.MODE_CBC, iv)
+def _decrypt_cbc_without_reinventing_the_wheel(message, iv_value, key):
+    cipher = AES.new(key, AES.MODE_CBC, iv_value)
     return cipher.decrypt(message)
 
 
 def main():
-    iv = b'\x00' * 16
+    iv_value = b'\x00' * 16
     key = 'YELLOW SUBMARINE'
     with open(os.path.join(os.path.dirname(__file__), 'challenge2_data'), 'rb') as data_set:
         input_text = b''.join(data_set.readlines())
         encrypted_message = codecs.decode(input_text, 'base64')
 
-    homebrew_solution = decrypt_cbc(encrypted_message, iv, key)
-    crytpolib_solution = _decrypt_cbc_without_reinventing_the_wheel(encrypted_message, iv, key)
+    homebrew_solution = decrypt_cbc(encrypted_message, iv_value, key)
+    crytpolib_solution = _decrypt_cbc_without_reinventing_the_wheel(encrypted_message, iv_value, key)
     assert crytpolib_solution == homebrew_solution
 
 

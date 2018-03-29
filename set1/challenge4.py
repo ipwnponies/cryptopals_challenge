@@ -5,7 +5,7 @@ import codecs
 
 from util import brute_force_byte_key
 
-inputs = '''0e3647e8592d35514a081243582536ed3de6734059001e3f535ce6271032
+INPUTS = '''0e3647e8592d35514a081243582536ed3de6734059001e3f535ce6271032
 334b041de124f73c18011a50e608097ac308ecee501337ec3e100854201d
 40e127f51c10031d0133590b1e490f3514e05a54143d08222c2a4071e351
 45440b171d5c1b21342e021c3a0eee7373215c4024f0eb733cf006e2040c
@@ -336,7 +336,7 @@ e03555453d1e31775f37331823164c341c09e310463438481019fb0b12fa
 
 def main():
     results = []
-    for i in inputs:
+    for i in INPUTS:
         hex_value = codecs.decode(i, 'hex')
         score, message, _ = max(brute_force_byte_key(hex_value))
         results.append((score, message, i))

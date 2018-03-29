@@ -1,7 +1,6 @@
 import codecs
 import os
 
-from util import decrypt_rotating_bytekey
 from util import decrypt_ecb
 
 KEY = 'YELLOW SUBMARINE'

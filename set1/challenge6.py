@@ -1,11 +1,11 @@
 import codecs
-import os.path
 import operator
+import os.path
 from collections import namedtuple
 
 from util import brute_force_byte_key
-from util import decrypt_rotating_bytekey
 from util import chunk
+from util import decrypt_rotating_bytekey
 
 
 def bucket(message, bin_size):
