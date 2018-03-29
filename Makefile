@@ -11,10 +11,12 @@ help:  # Print help
 .PHONY: venv
 venv:  # Create venv
 	./bin/venv_update.py venv= -ppython3 venv install= -r requirements-dev.txt -r requirements.txt --quiet
+	./venv/bin/pre-commit install
 
 .PHONY: test
 all_sets :=$(foreach i, $(sets), test-$(i))
 test: $(all_sets)  # Run all tests
+	./venv/bin/pre-commit run
 
 .PHONY: test-set1
 test-set1: $(challenges_set1);  # Run tests for set 1
