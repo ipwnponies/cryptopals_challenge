@@ -13,10 +13,20 @@ def decrypt_cbc(message, iv_value, key):
     result = []
     for index, block in enumerate(chain):
         if index == 0:
+            # Skip initialization vector
             continue
 
-        result.append(xor(decrypt_ecb(block, key), chain[index-1]))
+        result.append(_decrypt_cbc_block(block, key, chain[index-1]))
     return b''.join(result)
+
+
+def _decrypt_cbc_block(block, key, previous_block):
+    partial_decryption = decrypt_ecb(block, key)
+
+    # This is the 'chain' part of CBC. Simple XOR to previous block, doesn't necessarily have to
+    # be the decrypted value of previous block.
+    full_decrypt = xor(partial_decryption, previous_block)
+    return full_decrypt
 
 
 def _decrypt_cbc_without_reinventing_the_wheel(message, iv_value, key):
