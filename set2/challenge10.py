@@ -37,7 +37,7 @@ def _decrypt_cbc_without_reinventing_the_wheel(message, iv_value, key):
 def main():
     iv_value = b'\x00' * 16
     key = 'YELLOW SUBMARINE'
-    with open(os.path.join(os.path.dirname(__file__), 'challenge2_data'), 'rb') as data_set:
+    with open(os.path.join(os.path.dirname(__file__), 'challenge10_data'), 'rb') as data_set:
         input_text = b''.join(data_set.readlines())
         encrypted_message = codecs.decode(input_text, 'base64')
 
