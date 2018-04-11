@@ -8,12 +8,15 @@ from util import chunk
 
 
 def encryption_oracle(message, key):
-    unknown_string = codecs.decode((
-        'Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIG'
-        'Rvd24gc28gbXkgaGFpciBjYW4gYmxvdwpUaGUgZ2lybGll'
-        'cyBvbiBzdGFuZGJ5IHdhdmluZyBqdXN0IHRvIHNheSBoaQ'
-        'pEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUgYnkK'
-    ).encode(), 'base64')
+    '''Encryption function with secret payload.'''
+    unknown_string = codecs.decode(
+        (
+            'Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIG'
+            'Rvd24gc28gbXkgaGFpciBjYW4gYmxvdwpUaGUgZ2lybGll'
+            'cyBvbiBzdGFuZGJ5IHdhdmluZyBqdXN0IHRvIHNheSBoaQ'
+            'pEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUgYnkK'
+        ).encode(), 'base64',
+    )
     message = pkcs_padding(message + unknown_string, 16)
 
     cipher_mode = AES.MODE_ECB
@@ -52,6 +55,37 @@ def detect_block_size(key):
     return blocksize
 
 
+def extract_message(blocksize, key, message_length):
+    block_offset = 0
+    partial_block_decrypted_bytes = []
+    while len(partial_block_decrypted_bytes) < message_length:
+        for i in range(1, blocksize+1):
+            # Set the pad text to 1 byte less than blocksize. This will force the first block to include the
+            # hidden message in LSB
+            padtext = b'A' * (blocksize - i)
+
+            lsb = extract_lsb(block_offset, blocksize, key, padtext, bytes(partial_block_decrypted_bytes))
+            partial_block_decrypted_bytes.append(lsb)
+        block_offset += 1
+
+    return bytes(partial_block_decrypted_bytes[:message_length])
+
+
+def extract_lsb(block_offset, blocksize, key, known_padtext, partial_decrypt):
+    start = block_offset * blocksize
+    end = start + blocksize
+
+    # Reverse lookup from all generated possibiities
+    rainbow_table = {
+        encryption_oracle(known_padtext + partial_decrypt + chr(i).encode(), key)[start:end]:
+        i
+        for i in range(256)
+    }
+
+    ciphertext = encryption_oracle(known_padtext, key)
+    return rainbow_table[ciphertext[start:end]]
+
+
 def detect_message_length(key):
     '''Detect length of secret message
 
@@ -80,11 +114,21 @@ def detect_message_length(key):
 def main():
     key = generate_random_bytes(16)
 
-    blocksize = detect_block_size(key)
-    assert blocksize == 16, 'ECB uses 16 byte blocks, detected blocksize of {}'.format(blocksize)
+    # blocksize = detect_block_size(key)
+    # assert blocksize == 16, 'ECB uses 16 byte blocks, detected blocksize of {}'.format(blocksize)
+
+    # Hard code blocksize, we know it's ECB
+    blocksize = 16
 
     message_length = detect_message_length(key)
     assert message_length == 138
+
+    message = extract_message(blocksize, key, message_length)
+    assert message == b'''Rollin' in my 5.0
+With my rag-top down so my hair can blow
+The girlies on standby waving just to say hi
+Did you stop? No, I just drove by
+'''
 
 
 if __name__ == '__main__':
