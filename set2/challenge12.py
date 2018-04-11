@@ -52,11 +52,39 @@ def detect_block_size(key):
     return blocksize
 
 
+def detect_message_length(key):
+    '''Detect length of secret message
+
+    This is done by adding plaintext to fill-in the padding and counting how many bytes was needed.
+    '''
+    pad_length = 0
+    ciphertext_length = 0
+
+    # Safety terminate limit
+    max_padding_limit = 100
+    for _ in range(max_padding_limit):
+        ciphertext = encryption_oracle(b'\x00' * pad_length, key)
+        if ciphertext_length and ciphertext_length != len(ciphertext):
+            # Decrement to account for overshoot
+            pad_length -= 1
+            break
+        else:
+            ciphertext_length = len(ciphertext)
+            pad_length += 1
+    else:
+        raise Exception('Could not detect reasonable message length')
+
+    return ciphertext_length - pad_length
+
+
 def main():
     key = generate_random_bytes(16)
 
     blocksize = detect_block_size(key)
     assert blocksize == 16, 'ECB uses 16 byte blocks, detected blocksize of {}'.format(blocksize)
+
+    message_length = detect_message_length(key)
+    assert message_length == 138
 
 
 if __name__ == '__main__':
