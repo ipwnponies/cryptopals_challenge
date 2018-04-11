@@ -56,22 +56,43 @@ def detect_block_size(key):
 
 
 def extract_message(blocksize, key, message_length):
+    '''Extract the secret message in encryption function.
+
+    Pass to encryption function padding and detect the last significant byte.
+    Then increase padding and detect the next byte.
+    Repeat until whole block is detected.
+    Shift to next block and repeat algorithm.
+    '''
     block_offset = 0
     partial_block_decrypted_bytes = []
+
+    # Keep decrypting while we know the hidden message's length
     while len(partial_block_decrypted_bytes) < message_length:
-        for i in range(1, blocksize+1):
+        # Add known padtext to detect last byte of a block, decreasing the padding every iteration
+        for padding_lengthj in range(blocksize - 1, -1, -1):
             # Set the pad text to 1 byte less than blocksize. This will force the first block to include the
             # hidden message in LSB
-            padtext = b'A' * (blocksize - i)
+            padtext = b'A' * padding_lengthj
 
             lsb = extract_lsb(block_offset, blocksize, key, padtext, bytes(partial_block_decrypted_bytes))
             partial_block_decrypted_bytes.append(lsb)
+        # Move on to the next block. No need to increase padding, we are looking at the bytes of
+        # next block and already know all the bytes + padtext of previous blocks
         block_offset += 1
 
+    # Strip out the pkcs padding to get the sanitized message
     return bytes(partial_block_decrypted_bytes[:message_length])
 
 
 def extract_lsb(block_offset, blocksize, key, known_padtext, partial_decrypt):
+    '''Get the LSB of a block.
+
+    Brute force decrypt a single byte of the block by generating all possible values into a rainbow
+    table.
+    First we generate the ciphertext, witb padding.
+    Then we generate a rainbow table for the next unknown byte. Pad the plaintext with padding +
+    partially decrypted plaintext.
+    '''
     start = block_offset * blocksize
     end = start + blocksize
 
