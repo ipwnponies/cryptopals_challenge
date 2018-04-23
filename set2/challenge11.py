@@ -2,16 +2,9 @@ import random
 
 from Crypto.Cipher import AES
 
-from set1.challenge8 import detect_ecb
-from set2.challenge9 import pkcs_padding
-
-
-def _random_byte():
-    return random.randint(0, 255)
-
-
-def generate_random_bytes(size):
-    return bytes([_random_byte() for i in range(size)])
+from util import detect_ecb
+from util import generate_random_bytes
+from util import pkcs_padding
 
 
 def encryption_oracle(message):

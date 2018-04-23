@@ -2,9 +2,9 @@ import codecs
 
 from Crypto.Cipher import AES
 
-from set2.challenge11 import generate_random_bytes
-from set2.challenge9 import pkcs_padding
 from util import chunk
+from util import generate_random_bytes
+from util import pkcs_padding
 
 
 def encryption_oracle(message, key):
