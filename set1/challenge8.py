@@ -1,17 +1,7 @@
 import codecs
 import os
 
-from util import chunk
-
-
-def detect_ecb(message):
-    '''Extremely naive detection of ECB cipher.
-
-    Under ECB scheme, the same block (character) will be enrypted to the same value, we can do a
-    simple distinct (set) algorithm.
-    '''
-    chunks = chunk(message, 16)
-    return len(chunks) != len(set(chunks))
+from util import detect_ecb
 
 
 def main():

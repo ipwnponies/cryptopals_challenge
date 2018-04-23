@@ -1,11 +1,4 @@
-from util import chunk
-
-
-def pkcs_padding(message, chunk_size):
-    '''Pad the message at the end with \x04 characters to get even block sizes.'''
-    chunked = chunk(message, chunk_size)
-    chunked[-1] = chunked[-1].ljust(chunk_size, b'\x04')
-    return b''.join(chunked)
+from util import pkcs_padding
 
 
 def main():
