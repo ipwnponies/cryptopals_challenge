@@ -5,9 +5,6 @@ from util import pkcs_padding
 
 
 def decode_cookie(encoded_cookie):
-    # Santize input by stripping out any padding characters
-    encoded_cookie = encoded_cookie.rstrip('\x04')
-
     entries = encoded_cookie.split('&')
     result = {}
     for i in entries:
@@ -41,16 +38,29 @@ def profile_for(email):
     return encode_cookie(user_profile)
 
 
-def main():
-    profile = profile_for('foo@bar.com')
-
-    key = generate_random_bytes(16)
+def encrypt_profile(key, profile):
     cipher = AES.new(key, AES.MODE_ECB)
 
-    encrypted_profile = cipher.encrypt(pkcs_padding(profile.encode(), 16))
+    return cipher.encrypt(pkcs_padding(profile.encode(), 16))
 
-    decrypted = decode_cookie(cipher.decrypt(encrypted_profile).decode())
-    assert decrypted['email'] == 'foo@bar.com'
+
+def decrypt_profile(key, profile):
+    cipher = AES.new(key, AES.MODE_ECB)
+
+    plaintext = cipher.decrypt(profile).decode()
+
+    # Santize input by stripping out any padding characters
+    return plaintext.rstrip('\x04')
+
+
+def main():
+    key = generate_random_bytes(16)
+
+    profile1 = profile_for('foo@bar.commm')
+    encrypted_profile1 = encrypt_profile(key, profile1)
+
+    decrypted = decode_cookie(decrypt_profile(key, encrypted_profile1))
+    assert decrypted['email'] == 'foo@bar.commm'
     assert decrypted['role'] == 'user'
 
 
