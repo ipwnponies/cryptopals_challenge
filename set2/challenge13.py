@@ -1,5 +1,7 @@
 from Crypto.Cipher import AES
 
+from util import chunk
+from util import detect_block_size
 from util import generate_random_bytes
 from util import pkcs_padding
 
@@ -38,10 +40,10 @@ def profile_for(email):
     return encode_cookie(user_profile)
 
 
-def encrypt_profile(key, profile):
+def encrypt_profile(profile, key):
     cipher = AES.new(key, AES.MODE_ECB)
-
-    return cipher.encrypt(pkcs_padding(profile.encode(), 16))
+    padded_plaintext = pkcs_padding(profile.encode(), 16)
+    return cipher.encrypt(padded_plaintext)
 
 
 def decrypt_profile(key, profile):
@@ -53,11 +55,43 @@ def decrypt_profile(key, profile):
     return plaintext.rstrip('\x04')
 
 
+def _assert_block_size():
+    '''Detect and assert that encryption is AES in ECB mode.'''
+
+    # AES keys can be 16, 24, or 32 bytes.
+    # This doesn't affect the block size, which is fixed at 16 bytes.
+    key_size = 32
+    block_size = 16
+
+    key = generate_random_bytes(key_size)
+
+    # Pad out user input with 3 times blocksize
+    # This will guarantee a minimum of at 2 complete blocks of identical data
+    user_input = '\x00' * block_size * 3
+    message = oracle(user_input, key)
+
+    chunks = chunk(message, block_size)
+    assert len(chunks) != len(set(chunks)), 'There should be duplicate blocks using ECB.'
+
+    detected_size = detect_block_size(key, oracle)
+    assert detected_size == block_size, (
+        'This is supposed to be AES encrypted, 16 byte block sizes. '
+        f'Detected block size of {detected_size} instead.'
+    )
+
+
+def oracle(user_input, key):
+    profile = profile_for(user_input)
+    return encrypt_profile(profile, key)
+
+
 def main():
     key = generate_random_bytes(16)
 
     profile1 = profile_for('foo@bar.commm')
-    encrypted_profile1 = encrypt_profile(key, profile1)
+    encrypted_profile1 = encrypt_profile(profile1, key)
+
+    _assert_block_size()
 
     decrypted = decode_cookie(decrypt_profile(key, encrypted_profile1))
     assert decrypted['email'] == 'foo@bar.commm'
