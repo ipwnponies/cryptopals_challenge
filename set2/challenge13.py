@@ -148,6 +148,30 @@ def main():
         'Last 16 bytes of input should be dedicated to payload and look like last AES block.'
     )
 
+    # Insert the exploit block to the first profile. The exploit block is setup to look like the last block.
+    # block 1           block 2             block3
+    # email=foo@bar     .com&uid=10&role=   user...
+    # email=aaaaaaaaaa  admin\x04\x04...    &uid=10&role=user...
+    assert encrypted_profile1[:16] == encrypted_profile2[:16], (
+        'The first block should be identical since both profiles start with teh same email prefix.'
+    )
+    assert encrypted_profile1[16:32] != encrypted_profile2[16:32], (
+        'The second block should differ: '
+        'Profile1 has the role param left aligned. '
+        'Profile2 has the role value left aligned. '
+        'If the second blocks are the same, that means the input email is unnecessarily long. Just shift the splice '
+        'point further along for both profiles.'
+    )
+
+    # Append the left and right aligned blocks togethers.
+    admin_encrypted_profile = encrypted_profile1[0:32] + encrypted_profile2[16:32]
+
+    admin_profile = decode_cookie(decrypt_profile(key, admin_encrypted_profile))
+    assert admin_profile['email'] == username, 'Email should come from first profile'
+    assert admin_profile['role'] == 'admin', (
+        'role is {} but should come from second profile'.format(admin_profile['role'])
+    )
+
 
 if __name__ == '__main__':
     main()
