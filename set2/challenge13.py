@@ -85,17 +85,68 @@ def oracle(user_input, key):
     return encrypt_profile(profile, key)
 
 
+def get_user_profile_username(key):
+    '''Set up the profile (with user) to be patched.
+
+    Manipulate input to align 'role=' at block boundary. Blocks from the second profile will be takenk to follow up and
+    set the value to admin.
+    '''
+    # block 1           block 2             block3
+    # email=foo@bar     .com&uid=10&role=   user...
+
+    # Calculate how many bytes of input required to align the role input into separate block.
+    # This is multple of AES blocksize, 16 bytes.
+    num_chars_padding = 16 - len('email=' + '&uid=10&role=') % 16
+
+    username = 'a' * num_chars_padding
+
+    profile1 = profile_for(username)
+    return encrypt_profile(profile1, key), username
+
+
+def get_user_profile_with_admin(key):
+    '''Get a user profile with exploit payload setup.
+
+    Manipulate the input to get 'admin' from input to be at the start of block boundary. Insert padding at the end to
+    make it look last AES block (padding).
+    '''
+    # Padding character is determined by inspecting the oracle function, which is freely available to attacker.
+    # They can inspect the open source to understand the padding scheme and how to use it to exploit ECB.
+    padding = '\x04'
+
+    desired_role = 'admin'
+    num_padding = 16 - len(desired_role)
+    exploit_payload = desired_role + padding * num_padding
+    assert len(exploit_payload) == 16, (
+        'The admin value payload needs to fill out its own AES block entirely (16 bytes). '
+        'This allows for patching into another payload without corrupting the data structure. '
+    )
+
+    # block 1           block 2                 block3
+    # email=aaaaaaaaaa  admin\x04\x04...        &uid=10&role=user...
+    prefix_length = 16 - len('email=')
+
+    unused_email_prefix = 'a' * prefix_length
+    profile2 = profile_for(unused_email_prefix + exploit_payload)
+    return encrypt_profile(profile2, key)
+
+
 def main():
     key = generate_random_bytes(16)
 
-    profile1 = profile_for('foo@bar.commm')
-    encrypted_profile1 = encrypt_profile(profile1, key)
-
     _assert_block_size()
 
-    decrypted = decode_cookie(decrypt_profile(key, encrypted_profile1))
-    assert decrypted['email'] == 'foo@bar.commm'
-    assert decrypted['role'] == 'user'
+    encrypted_profile1, username = get_user_profile_username(key)
+    decrypted_profile1 = decode_cookie(decrypt_profile(key, encrypted_profile1))
+    assert decrypted_profile1['email'] == username == 'aaaaaaaaaaaaa', (
+        'Email should be 13 characters, that is required length to setup first profile.'
+    )
+
+    encrypted_profile2 = get_user_profile_with_admin(key)
+    decrypted_profile2 = decode_cookie(decrypt_profile(key, encrypted_profile2))
+    assert decrypted_profile2['email'][-16:] == ('admin' + '\x04' * 11), (
+        'Last 16 bytes of input should be dedicated to payload and look like last AES block.'
+    )
 
 
 if __name__ == '__main__':
