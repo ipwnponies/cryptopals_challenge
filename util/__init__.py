@@ -45,7 +45,12 @@ def xor(value1, value2):
 
 
 def pkcs_padding(message, chunk_size):
-    '''Pad the message at the end with \x04 characters to get even block sizes.'''
+    '''Pad the message at the end with \x04 characters to get even block sizes.
+
+    This is not real implementation of pkcs7 padding: https://en.wikipedia.org/wiki/Padding_(cryptography)#PKCS7.
+    It's extremely flawed but sufficiently serves the purpose of learning cryptography.
+    Namely, there's no way to tell if your last byte is padding or plaintext is even multiple of blocksize.
+    '''
     chunked = chunk(message, chunk_size)
     chunked[-1] = chunked[-1].ljust(chunk_size, b'\x04')
     return b''.join(chunked)
@@ -67,3 +72,33 @@ def detect_ecb(message):
     '''
     chunks = chunk(message, 16)
     return len(chunks) != len(set(chunks))
+
+
+def detect_block_size(key, oracle):
+    '''Detect blocksize of encryption function.
+
+    Determines the block size used in encryption scheme. It passes in known common plaintext and
+    determines when the output blocks begin to repeat.
+    '''
+    blocksize = 0
+    for pad_length in range(1, 2**6):
+        ciphertext = oracle('a' * pad_length, key)
+
+        # Split the cipher text into blocks of even size
+        for j in range(len(ciphertext)//2, 1, -1):
+
+            # Skip non-divisible sizes
+            if len(ciphertext) % j != 0:
+                continue
+
+            chunks = chunk(ciphertext, j)
+            if len(chunks) != len(set(chunks)):
+                # If there are repeated blocks, this is a candiate size
+                blocksize = j
+                break
+        if blocksize:
+            break
+    else:
+        raise Exception('Could not detect block size')
+
+    return blocksize

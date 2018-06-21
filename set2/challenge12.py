@@ -2,13 +2,16 @@ import codecs
 
 from Crypto.Cipher import AES
 
-from util import chunk
 from util import generate_random_bytes
 from util import pkcs_padding
 
 
 def encryption_oracle(message, key):
     '''Encryption function with secret payload.'''
+
+    if isinstance(message, str):
+        message = message.encode()
+
     unknown_string = codecs.decode(
         (
             'Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIG'
@@ -23,36 +26,6 @@ def encryption_oracle(message, key):
     cipher = AES.new(key, cipher_mode)
 
     return cipher.encrypt(message)
-
-
-def detect_block_size(key):
-    '''Detect blocksize of encryption function.
-
-    Determines the block size used in encryption scheme. It passes in known common plaintext and
-    determines when the output blocks begin to repeat.
-    '''
-    blocksize = 0
-    for pad_length in range(1, 2**6):
-        ciphertext = encryption_oracle(b'a' * pad_length, key)
-
-        # Split the cipher text into blocks of even size
-        for j in range(len(ciphertext)//2, 1, -1):
-
-            # Skip non-divisible sizes
-            if len(ciphertext) % j != 0:
-                continue
-
-            chunks = chunk(ciphertext, j)
-            if len(chunks) != len(set(chunks)):
-                # If there are repeated blocks, this is a candiate size
-                blocksize = j
-                break
-        if blocksize:
-            break
-    else:
-        raise Exception('Could not detect block size')
-
-    return blocksize
 
 
 def extract_message(blocksize, key, message_length):
@@ -135,7 +108,7 @@ def detect_message_length(key):
 def main():
     key = generate_random_bytes(16)
 
-    # blocksize = detect_block_size(key)
+    # blocksize = detect_block_size(key, encryption_oracle)
     # assert blocksize == 16, 'ECB uses 16 byte blocks, detected blocksize of {}'.format(blocksize)
 
     # Hard code blocksize, we know it's ECB
