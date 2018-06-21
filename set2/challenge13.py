@@ -6,56 +6,62 @@ from util import generate_random_bytes
 from util import pkcs_padding
 
 
-def decode_cookie(encoded_cookie):
-    entries = encoded_cookie.split('&')
-    result = {}
-    for i in entries:
-        key, _, value = i.partition('=')
-        if not key:
-            raise Exception('Not a key value pair: {}'.format(i))
-        result[key] = value
+class Oracle():
+    def __init__(self):
+        self.key = generate_random_bytes(16)
 
-    return result
+    def get_user_profile(self, email):
+        return self.encrypt_profile(self.profile_for(email))
+
+    def encrypt_profile(self, profile):
+        cipher = AES.new(self.key, AES.MODE_ECB)
+        padded_plaintext = pkcs_padding(profile.encode(), 16)
+        return cipher.encrypt(padded_plaintext)
+
+    def decrypt_profile(self, ciphertext):
+        cipher = AES.new(self.key, AES.MODE_ECB)
+
+        plaintext = cipher.decrypt(ciphertext).decode()
+
+        # Santize input by stripping out any padding characters
+        return plaintext.rstrip('\x04')
+
+    @staticmethod
+    def profile_for(email):
+        # Sanitize input, not meta characters allowed
+        email = email.replace('&', '').replace('=', '')
+
+        # Role is hardcoded to user because this is supposed to be "secure" and not allow for generating admin user role
+        user_profile = {
+            'email': email,
+            'uid': 10,
+            'role': 'user',
+        }
+
+        return Oracle.encode_cookie(user_profile)
+
+    @staticmethod
+    def decode_cookie(encoded_cookie):
+        entries = encoded_cookie.split('&')
+        result = {}
+        for i in entries:
+            key, _, value = i.partition('=')
+            if not key:
+                raise Exception('Not a key value pair: {}'.format(i))
+            result[key] = value
+
+        return result
+
+    @staticmethod
+    def encode_cookie(cookie):
+        result = [
+            '{}={}'.format(key, value)
+            for key, value in cookie.items()
+        ]
+        return '&'.join(result)
 
 
-def encode_cookie(cookie):
-    result = [
-        '{}={}'.format(key, value)
-        for key, value in cookie.items()
-    ]
-    return '&'.join(result)
-
-
-def profile_for(email):
-    # Sanitize input, not meta characters allowed
-    email = email.replace('&', '').replace('=', '')
-
-    # Role is hardcoded to user because this is supposed to be "secure" and not allow for generating admin user role
-    user_profile = {
-        'email': email,
-        'uid': 10,
-        'role': 'user',
-    }
-
-    return encode_cookie(user_profile)
-
-
-def encrypt_profile(profile, key):
-    cipher = AES.new(key, AES.MODE_ECB)
-    padded_plaintext = pkcs_padding(profile.encode(), 16)
-    return cipher.encrypt(padded_plaintext)
-
-
-def decrypt_profile(key, profile):
-    cipher = AES.new(key, AES.MODE_ECB)
-
-    plaintext = cipher.decrypt(profile).decode()
-
-    # Santize input by stripping out any padding characters
-    return plaintext.rstrip('\x04')
-
-
-def _assert_block_size():
+def _assert_block_size(oracle):
     '''Detect and assert that encryption is AES in ECB mode.'''
 
     # AES keys can be 16, 24, or 32 bytes.
@@ -68,24 +74,20 @@ def _assert_block_size():
     # Pad out user input with 3 times blocksize
     # This will guarantee a minimum of at 2 complete blocks of identical data
     user_input = '\x00' * block_size * 3
-    message = oracle(user_input, key)
+    message = oracle.encrypt_profile(Oracle.profile_for(user_input))
 
     chunks = chunk(message, block_size)
     assert len(chunks) != len(set(chunks)), 'There should be duplicate blocks using ECB.'
 
-    detected_size = detect_block_size(key, oracle)
+    detected_size = detect_block_size(key, lambda x, y: oracle.encrypt_profile(Oracle.profile_for(x)))
+
     assert detected_size == block_size, (
         'This is supposed to be AES encrypted, 16 byte block sizes. '
         f'Detected block size of {detected_size} instead.'
     )
 
 
-def oracle(user_input, key):
-    profile = profile_for(user_input)
-    return encrypt_profile(profile, key)
-
-
-def get_user_profile_username(key):
+def get_user_profile_username():
     '''Set up the profile (with user) to be patched.
 
     Manipulate input to align 'role=' at block boundary. Blocks from the second profile will be takenk to follow up and
@@ -100,11 +102,10 @@ def get_user_profile_username(key):
 
     username = 'a' * num_chars_padding
 
-    profile1 = profile_for(username)
-    return encrypt_profile(profile1, key), username
+    return username
 
 
-def get_user_profile_with_admin(key):
+def get_user_profile_with_admin():
     '''Get a user profile with exploit payload setup.
 
     Manipulate the input to get 'admin' from input to be at the start of block boundary. Insert padding at the end to
@@ -127,8 +128,7 @@ def get_user_profile_with_admin(key):
     prefix_length = 16 - len('email=')
 
     unused_email_prefix = 'a' * prefix_length
-    profile2 = profile_for(unused_email_prefix + exploit_payload)
-    return encrypt_profile(profile2, key)
+    return unused_email_prefix + exploit_payload
 
 
 def detect_exploit_start_boundary():
@@ -156,18 +156,20 @@ def detect_profile_end_boundary():
 
 
 def main():
-    key = generate_random_bytes(16)
+    oracle = Oracle()
 
-    _assert_block_size()
+    _assert_block_size(oracle)
 
-    encrypted_profile1, username = get_user_profile_username(key)
-    decrypted_profile1 = decode_cookie(decrypt_profile(key, encrypted_profile1))
-    assert decrypted_profile1['email'] == username == 'aaaaaaaaaaaaa', (
+    username1 = get_user_profile_username()
+    encrypted_profile1 = oracle.get_user_profile(username1)
+    decrypted_profile1 = Oracle.decode_cookie(oracle.decrypt_profile(encrypted_profile1))
+    assert decrypted_profile1['email'] == username1 == 'aaaaaaaaaaaaa', (
         'Email should be 13 characters, that is required length to setup first profile.'
     )
 
-    encrypted_profile2 = get_user_profile_with_admin(key)
-    decrypted_profile2 = decode_cookie(decrypt_profile(key, encrypted_profile2))
+    username2 = get_user_profile_with_admin()
+    encrypted_profile2 = oracle.get_user_profile(username2)
+    decrypted_profile2 = Oracle.decode_cookie(oracle.decrypt_profile(encrypted_profile2))
     assert decrypted_profile2['email'][-16:] == ('admin' + '\x04' * 11), (
         'Last 16 bytes of input should be dedicated to payload and look like last AES block.'
     )
@@ -192,8 +194,8 @@ def main():
     admin_encrypted_profile = encrypted_profile1[0:-right_boundary] + \
         encrypted_profile2[exploit_start_boundary:exploit_start_boundary + 16]
 
-    admin_profile = decode_cookie(decrypt_profile(key, admin_encrypted_profile))
-    assert admin_profile['email'] == username, 'Email should come from first profile'
+    admin_profile = Oracle.decode_cookie(oracle.decrypt_profile(admin_encrypted_profile))
+    assert admin_profile['email'] == username1, 'Email should come from first profile'
     assert admin_profile['role'] == 'admin', (
         'role is {} but should come from second profile'.format(admin_profile['role'])
     )
