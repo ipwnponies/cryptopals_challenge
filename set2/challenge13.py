@@ -131,6 +131,30 @@ def get_user_profile_with_admin(key):
     return encrypt_profile(profile2, key)
 
 
+def detect_exploit_start_boundary():
+    '''Get the first byte where inserted exploit can be found.
+
+    Block1              Block2              Block3
+    email=aaaaaaaaaa    admin-----------    &uid=10&role=user
+                        ^
+    '''
+    # Number of blocks before input with exploit. This value is determined from analysis of the k-v encoding source to
+    # see how much overhead exists before user input.
+    return (len('email=') // 16 + 1) * 16
+
+
+def detect_profile_end_boundary():
+    '''Get the first byte where exploit should be inserted.
+
+    Block1              Block2              Block3              Block4
+    email=aaaaaaaaaa    aaa&uid=10&role=    user
+                                            ^
+    '''
+    # Number of blocks (in bytes) remaining, after segmenting role.  This value is determined from analysis of the
+    # encoded cookie source.
+    return (len('user') // 16 + 1) * 16
+
+
 def main():
     key = generate_random_bytes(16)
 
@@ -163,8 +187,10 @@ def main():
         'point further along for both profiles.'
     )
 
-    # Append the left and right aligned blocks togethers.
-    admin_encrypted_profile = encrypted_profile1[0:32] + encrypted_profile2[16:32]
+    right_boundary = detect_profile_end_boundary()
+    exploit_start_boundary = detect_exploit_start_boundary()
+    admin_encrypted_profile = encrypted_profile1[0:-right_boundary] + \
+        encrypted_profile2[exploit_start_boundary:exploit_start_boundary + 16]
 
     admin_profile = decode_cookie(decrypt_profile(key, admin_encrypted_profile))
     assert admin_profile['email'] == username, 'Email should come from first profile'
