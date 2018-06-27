@@ -2,7 +2,7 @@
 
 sets:= set1 set2
 challenges_set1:= $(patsubst %, set1-%, 1 2 3 4 5 6 7 8)
-challenges_set2:= $(patsubst %, set2-%, 9 10 11 12 13)
+challenges_set2:= $(patsubst %, set2-%, 9 10 11 12 13 14)
 
 .PHONY: help
 help:  # Print help
